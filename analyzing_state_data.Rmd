@@ -1,0 +1,140 @@
+---
+title: "Analyzing State Data"
+author: "Camryn Tidsworth"
+date: "2024-05-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+```
+
+## Welcome
+
+For this project, I decided to explore the publicly available dataset "state.x77." I explore the data, do some very cursory cleaning (as the data was already very clean to begin with), and find some interesting correlations to analyze.
+
+First, let's learn about our data.
+
+```{r}
+?state.x77
+```
+
+According to the information in the help pane, this dataset is a "matrix with 50 rows and 8 columns giving the following statistics in the respective columns.
+
+Population:
+
+* population estimate as of July 1, 1975
+
+Income:
+
+* per capita income (1974)
+
+Illiteracy:
+
+* illiteracy (1970, percent of population)
+
+Life Exp:
+
+* life expectancy in years (1969–71)
+
+Murder:
+
+* murder and non-negligent manslaughter rate per 100,000 population (1976)
+
+HS Grad:
+
+* percent high-school graduates (1970)
+
+Frost:
+
+* mean number of days with minimum temperature below freezing (1931–1960) in capital or large city
+
+Area:
+
+* land area in square miles"
+
+Now that we know some background about our data let's take a look at the first few columns.
+
+```{r}
+head(state.x77)
+```
+
+Next, we'll see if there are any missing values in our dataset that will need to be considered during the anlysis.
+
+```{r}
+sum(is.na(state.x77))
+```
+Good luck! There are no missing values in the data. 
+
+Now let's get some initial summary statistics.
+
+```{r}
+summary(state.x77)
+```
+
+The mean life expectancy is lower than I would've expected. But then this data was collected in 1961-1971. Let's hope the life expectancy has increased since then.
+
+I'm curious about the population density of each state, so I'll add a column with this new metric. In order to do this, I first need to convert state.x77 to a dataframe.
+
+```{r}
+state.stats <- state.x77 %>%
+  as.data.frame(.)
+```
+
+Now we can make the new column.
+
+```{r}
+state.x77_pd <- mutate(state.stats, pop_density = Population / Area)
+glimpse(state.x77_pd)
+```
+
+Now let's play with some scatter and line plots to see if there are any correlations in the data.
+
+```{r}
+ggplot(state.x77_pd, aes(x = Illiteracy,
+                y = Income)) +
+  geom_point() +
+  geom_smooth(method = "lm") 
+```
+
+Illiteracy and income have a negative correlation.
+
+```{r}
+ggplot(state.x77_pd, aes(x = `Life Exp`,
+                y = Income)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+Life expectancy and income have a slight positive correlation. 
+
+```{r}
+ggplot(state.x77_pd, aes(x = Frost,
+                y = Murder)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+Interestingly, frost and murder are negatively correlated. This would be an interesting area for future analysis: does frost somehow cause murder, or is this a totally random and inconsequential correlation?
+
+Finally, let's assume I have a client who is interested in the connection between litteracy rates and income. I'll create a summary table showing this relationship.
+
+```{r}
+state.x77_pd %>% 
+  group_by(Illiteracy) %>% 
+  summarise(mean(Income),
+            median(Income))
+```
+
+Based on both the previous graph and this tibble, income and literacy have a positive linear correlation in the United States. 
+
+## Conclusion
+
+Thanks for taking a look at my project. As you can see, this was a cursory, semi_unfocused analysis project that I undertook to practice and demonstrate common R skills. In the future I look forward to doing more focused projects to answer specific questions. Maybe I'll dig into that frost-murder relationship...
+
+As always, constructive feedback is very welcome!
+
+
